@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { getTasks } from "../services/tasksApi";
 
 const Dashboard = () => {
   const { logout } = useAuth();
@@ -9,6 +11,12 @@ const Dashboard = () => {
     logout();
     navigate("/login", { replace: true });
   };
+
+  //fake data fetching
+useEffect(() => {
+  getTasks().then(console.log).catch(console.error);
+}, []);
+
 
   return (
     <div className="p-6">
