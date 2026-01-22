@@ -1,30 +1,29 @@
 import { useEffect, useState } from "react";
-import { getTasks } from "../services/tasksApi";
+import { getTasks, createTask, updateTask } from "../services/tasksApi";
 import TaskList from "../components/tasks/TaskList";
+import Modal from "../components/common/Modal";
+import TaskForm from "../components/tasks/TaskForm";
 import Loader from "../components/common/Loader";
+
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
+  const { logout } = useAuth();          // ✅ inside component
+  const navigate = useNavigate();        // ✅ inside component
+
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
-  const { logout } = useAuth();
-  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
 
   useEffect(() => {
     const fetchTasks = async () => {
-      try {
-        const data = await getTasks();
-        setTasks(data);
-      } catch (err) {
-        setError("Failed to load tasks");
-      } finally {
-        setLoading(false);
-      }
+      const data = await getTasks();
+      setTasks(data);
+      setLoading(false);
     };
-
     fetchTasks();
   }, []);
 
@@ -33,29 +32,68 @@ const Dashboard = () => {
     navigate("/login", { replace: true });
   };
 
+  const handleCreate = async (task) => {
+    const newTask = await createTask(task);
+    setTasks((prev) => [...prev, newTask]);
+    closeModal();
+  };
+
+  const handleEdit = async (task) => {
+    const updated = await updateTask(task.id, task);
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+    closeModal();
+  };
+
+  const openCreateModal = () => {
+    setEditingTask(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (task) => {
+    setEditingTask(task);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingTask(null);
+  };
+
+  if (loading) return <Loader />;
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm p-4 flex justify-between items-center">
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <div className="flex justify-between mb-6">
         <h1 className="text-xl font-semibold">Task Dashboard</h1>
+
+        <button
+          onClick={openCreateModal}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          + New Task
+        </button>
+
         <button
           onClick={handleLogout}
-          className="text-sm bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600"
+          className="bg-red-500 text-white px-4 py-2 rounded"
         >
           Logout
         </button>
-      </header>
+      </div>
 
-      {/* Content */}
-      <main className="p-6">
-        {loading && <Loader />}
+      <TaskList tasks={tasks} onEdit={openEditModal} />
 
-        {error && (
-          <p className="text-red-500 text-center">{error}</p>
-        )}
-
-        {!loading && !error && <TaskList tasks={tasks} />}
-      </main>
+      <Modal
+        isOpen={isModalOpen}
+        title={editingTask ? "Edit Task" : "Create Task"}
+        onClose={closeModal}
+      >
+        <TaskForm
+          initialData={editingTask}
+          onSubmit={editingTask ? handleEdit : handleCreate}
+          onCancel={closeModal}
+        />
+      </Modal>
     </div>
   );
 };

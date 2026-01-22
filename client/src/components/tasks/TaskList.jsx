@@ -1,18 +1,14 @@
 import TaskCard from "./TaskCard";
 
-const TaskList = ({ tasks }) => {
-  if (tasks.length === 0) {
-    return (
-      <div className="text-center text-gray-500 py-10">
-        No tasks found
-      </div>
-    );
+const TaskList = ({ tasks, onEdit }) => {
+  if (!tasks.length) {
+    return <p className="text-center text-gray-500">No tasks found</p>;
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {tasks.map((task) => (
-        <TaskCard key={task.id} task={task} />
+        <TaskCard key={task.id} task={task} onEdit={onEdit} />
       ))}
     </div>
   );
