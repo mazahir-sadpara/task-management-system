@@ -30,60 +30,95 @@ const TaskForm = ({ initialData, onSubmit, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <input
-        name="title"
-        placeholder="Title"
-        required
-        value={task.title}
-        onChange={handleChange}
-        className="w-full border p-2 rounded"
-      />
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          Title <span className="text-red-500">*</span>
+        </label>
+        <input
+          name="title"
+          placeholder="Enter task title"
+          required
+          value={task.title}
+          onChange={handleChange}
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 outline-none"
+        />
+      </div>
 
-      <textarea
-        name="description"
-        placeholder="Description"
-        value={task.description}
-        onChange={handleChange}
-        className="w-full border p-2 rounded"
-      />
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          Description
+        </label>
+        <textarea
+          name="description"
+          placeholder="Enter task description"
+          value={task.description}
+          onChange={handleChange}
+          rows={4}
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 outline-none resize-none"
+        />
+      </div>
 
-      <select
-        name="status"
-        value={task.status}
-        onChange={handleChange}
-        className="w-full border p-2 rounded"
-      >
-        <option>Todo</option>
-        <option>In Progress</option>
-        <option>Done</option>
-      </select>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Status
+          </label>
+          <select
+            name="status"
+            value={task.status}
+            onChange={handleChange}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 outline-none bg-white"
+          >
+            <option>Todo</option>
+            <option>In Progress</option>
+            <option>Done</option>
+          </select>
+        </div>
 
-      <select
-        name="priority"
-        value={task.priority}
-        onChange={handleChange}
-        className="w-full border p-2 rounded"
-      >
-        <option>Low</option>
-        <option>Medium</option>
-        <option>High</option>
-      </select>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            Priority
+          </label>
+          <select
+            name="priority"
+            value={task.priority}
+            onChange={handleChange}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 outline-none bg-white"
+          >
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
+        </div>
+      </div>
 
-      <input
-        type="date"
-        name="dueDate"
-        value={task.dueDate}
-        onChange={handleChange}
-        className="w-full border p-2 rounded"
-      />
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+          Due Date
+        </label>
+        <input
+          type="date"
+          name="dueDate"
+          value={task.dueDate}
+          onChange={handleChange}
+          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 outline-none"
+        />
+      </div>
 
-      <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="px-4 py-2 border rounded">
+      <div className="flex justify-end gap-3 pt-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-6 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+        >
           Cancel
         </button>
-        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
-          Save
+        <button
+          type="submit"
+          className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-medium shadow-md hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          {initialData ? "Update Task" : "Create Task"}
         </button>
       </div>
     </form>
