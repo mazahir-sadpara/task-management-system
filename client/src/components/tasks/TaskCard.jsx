@@ -1,4 +1,4 @@
-const TaskCard = ({ task, onEdit }) => {
+const TaskCard = ({ task, onEdit, onDelete }) => {
   return (
     <div className="bg-white p-4 rounded-xl border shadow-sm">
       <h3 className="font-semibold">{task.title}</h3>
@@ -9,12 +9,21 @@ const TaskCard = ({ task, onEdit }) => {
         <span>Priority: {task.priority}</span>
       </div>
 
-      <button
-        onClick={() => onEdit(task)}
-        className="mt-3 text-blue-600 text-sm"
-      >
-        Edit
-      </button>
+      <div className="flex gap-3 mt-3">
+        <button
+          onClick={() => onEdit(task)}
+          className="text-blue-600 text-sm"
+        >
+          Edit
+        </button>
+
+        <button
+          onClick={() => onDelete(task.id)}
+          className="text-red-500 text-sm"
+        >
+          Delete
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { getTasks, createTask, updateTask } from "../services/tasksApi";
+import {
+  getTasks,
+  createTask,
+  updateTask,
+  deleteTask,
+} from "../services/tasksApi";
 import TaskList from "../components/tasks/TaskList";
 import Modal from "../components/common/Modal";
 import TaskForm from "../components/tasks/TaskForm";
@@ -8,9 +13,16 @@ import Loader from "../components/common/Loader";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+import { useMemo } from "react";
+import TaskFilters from "../components/tasks/TaskFilters";
+
 const Dashboard = () => {
-  const { logout } = useAuth();          // ✅ inside component
-  const navigate = useNavigate();        // ✅ inside component
+  const { logout } = useAuth(); // ✅ inside component
+  const navigate = useNavigate(); // ✅ inside component
+
+  const [statusFilter, setStatusFilter] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("");
+  const [search, setSearch] = useState("");
 
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +56,14 @@ const Dashboard = () => {
     closeModal();
   };
 
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm("Delete this task?");
+    if (!confirmDelete) return;
+
+    await deleteTask(id);
+    setTasks((prev) => prev.filter((task) => task.id !== id));
+  };
+
   const openCreateModal = () => {
     setEditingTask(null);
     setIsModalOpen(true);
@@ -58,6 +78,19 @@ const Dashboard = () => {
     setIsModalOpen(false);
     setEditingTask(null);
   };
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      const matchStatus = !statusFilter || task.status === statusFilter;
+
+      const matchPriority = !priorityFilter || task.priority === priorityFilter;
+
+      const matchSearch = task.title
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+      return matchStatus && matchPriority && matchSearch;
+    });
+  }, [tasks, statusFilter, priorityFilter, search]);
 
   if (loading) return <Loader />;
 
@@ -81,7 +114,20 @@ const Dashboard = () => {
         </button>
       </div>
 
-      <TaskList tasks={tasks} onEdit={openEditModal} />
+      <TaskFilters
+        status={statusFilter}
+        priority={priorityFilter}
+        search={search}
+        setStatus={setStatusFilter}
+        setPriority={setPriorityFilter}
+        setSearch={setSearch}
+      />
+
+      <TaskList
+        tasks={filteredTasks}
+        onEdit={openEditModal}
+        onDelete={handleDelete}
+      />
 
       <Modal
         isOpen={isModalOpen}
