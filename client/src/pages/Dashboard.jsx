@@ -31,14 +31,8 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await getTasks();
-
-        // ✅ SAFETY: handle all API response shapes
-        const safeTasks = Array.isArray(response)
-          ? response
-          : response?.data || [];
-
-        setTasks(safeTasks);
+        const tasks = await getTasks();
+        setTasks(Array.isArray(tasks) ? tasks : []);
       } catch (error) {
         console.error("Failed to fetch tasks:", error);
         setTasks([]); // prevent crash
@@ -56,30 +50,51 @@ const Dashboard = () => {
   };
 
   const handleCreate = async (task) => {
-    const newTask = await createTask(task);
-    setTasks((prev) => [...prev, newTask]);
-    closeModal();
+    try {
+      const newTask = await createTask(task);
+      setTasks((prev) => [...prev, newTask]);
+      closeModal();
+    } catch (error) {
+      console.error("Failed to create task:", error);
+      alert(error.response?.data?.error || "Failed to create task");
+    }
   };
 
   const handleEdit = async (task) => {
-    const updated = await updateTask(task.id, task);
-    setTasks((prev) =>
-      prev.map((t) => (t.id === task.id ? updated : t))
-    );
-    closeModal();
+    try {
+      if (!task.id) {
+        alert("Invalid task ID");
+        return;
+      }
+      const updated = await updateTask(task.id, task);
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
+      closeModal();
+    } catch (error) {
+      console.error("Failed to update task:", error);
+      alert(error.response?.data?.error || "Failed to update task");
+    }
   };
 
   const handleDelete = async (id) => {
-    const taskTitle =
-      tasks.find((t) => t.id === id)?.title || "this task";
+    if (!id) {
+      alert("Invalid task ID");
+      return;
+    }
+
+    const taskTitle = tasks.find((t) => t.id === id)?.title || "this task";
 
     const confirmDelete = window.confirm(
-      `Are you sure you want to delete "${taskTitle}"? This action cannot be undone.`
+      `Are you sure you want to delete "${taskTitle}"? This action cannot be undone.`,
     );
     if (!confirmDelete) return;
 
-    await deleteTask(id);
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+    try {
+      await deleteTask(id);
+      setTasks((prev) => prev.filter((task) => task.id !== id));
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+      alert(error.response?.data?.error || "Failed to delete task");
+    }
   };
 
   const openCreateModal = () => {
@@ -100,14 +115,13 @@ const Dashboard = () => {
   // ✅ SAFE filtering
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
-      const matchStatus =
-        !statusFilter || task.status === statusFilter;
+      const matchStatus = !statusFilter || task.status === statusFilter;
 
-      const matchPriority =
-        !priorityFilter || task.priority === priorityFilter;
+      const matchPriority = !priorityFilter || task.priority === priorityFilter;
 
-      const matchSearch =
-        task.title?.toLowerCase().includes(search.toLowerCase());
+      const matchSearch = task.title
+        ?.toLowerCase()
+        .includes(search.toLowerCase());
 
       return matchStatus && matchPriority && matchSearch;
     });
@@ -116,7 +130,9 @@ const Dashboard = () => {
   if (loading) return <Loader />;
 
   const totalTasks = tasks.length;
-  const inProgressTasks = tasks.filter((t) => t.status === "In Progress").length;
+  const inProgressTasks = tasks.filter(
+    (t) => t.status === "In Progress",
+  ).length;
   const completedTasks = tasks.filter((t) => t.status === "Done").length;
   const todoTasks = tasks.filter((t) => t.status === "Todo").length;
 
@@ -134,21 +150,41 @@ const Dashboard = () => {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <button 
-              onClick={openCreateModal} 
+            <button
+              onClick={openCreateModal}
               className="btn-primary w-full sm:w-auto"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               New Task
             </button>
-            <button 
-              onClick={handleLogout} 
+            <button
+              onClick={handleLogout}
               className="btn-secondary w-full sm:w-auto"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
               </svg>
               Logout
             </button>
@@ -160,49 +196,105 @@ const Dashboard = () => {
           <div className="card group cursor-default">
             <div className="flex items-center justify-between mb-2">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
                 </svg>
               </div>
-              <span className="text-3xl font-bold text-gray-800">{totalTasks}</span>
+              <span className="text-3xl font-bold text-gray-800">
+                {totalTasks}
+              </span>
             </div>
-            <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Tasks</h3>
+            <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+              Total Tasks
+            </h3>
           </div>
 
           <div className="card group cursor-default">
             <div className="flex items-center justify-between mb-2">
               <div className="p-3 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg shadow-lg">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </div>
-              <span className="text-3xl font-bold text-gray-800">{inProgressTasks}</span>
+              <span className="text-3xl font-bold text-gray-800">
+                {inProgressTasks}
+              </span>
             </div>
-            <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">In Progress</h3>
+            <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+              In Progress
+            </h3>
           </div>
 
           <div className="card group cursor-default">
             <div className="flex items-center justify-between mb-2">
               <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg shadow-lg">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </div>
-              <span className="text-3xl font-bold text-gray-800">{completedTasks}</span>
+              <span className="text-3xl font-bold text-gray-800">
+                {completedTasks}
+              </span>
             </div>
-            <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">Completed</h3>
+            <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+              Completed
+            </h3>
           </div>
 
           <div className="card group cursor-default">
             <div className="flex items-center justify-between mb-2">
               <div className="p-3 bg-gradient-to-br from-gray-500 to-slate-600 rounded-lg shadow-lg">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
               </div>
-              <span className="text-3xl font-bold text-gray-800">{todoTasks}</span>
+              <span className="text-3xl font-bold text-gray-800">
+                {todoTasks}
+              </span>
             </div>
-            <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">To Do</h3>
+            <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wide">
+              To Do
+            </h3>
           </div>
         </div>
 
